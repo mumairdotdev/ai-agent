@@ -22,7 +22,10 @@ def main() -> None:
         }
     ]
     )
-
+    if response.usage is None:
+        raise RuntimeError("Usage proterty is None.")
+    print(f"Prompt tokens: {response.usage.prompt_tokens}")
+    print(f"Response tokens: {response.usage.completion_tokens}")
     print("Response:")
     print(response.choices[0].message.content)
 
