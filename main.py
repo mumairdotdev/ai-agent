@@ -3,15 +3,25 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
 
-def generate_content(client: OpenAI, messages: list) -> None:
-    return client.chat.completions.create(
+def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -> None:
+    response = client.chat.completions.create(
         model="openrouter/free",
         messages= messages
     )
 
+    if response.usage is None:
+        raise RuntimeError("Usage proterty is None.")
+    if args.verbose:
+        print(f"User prompt: {args.user_prompt}")
+        print(f"Prompt tokens: {response.usage.prompt_tokens}")
+        print(f"Response tokens: {response.usage.completion_tokens}")
+    print("Response:")
+    print(response.choices[0].message.content)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Code Assistant")
     parser.add_argument("user_prompt", type=str, help="Prompt to send to the LLM")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
 
     load_dotenv()
@@ -28,14 +38,7 @@ def main() -> None:
         {"role": "user", "content": args.user_prompt},
     ]
 
-    response = generate_content(client, messages)
-
-    if response.usage is None:
-        raise RuntimeError("Usage proterty is None.")
-    print(f"Prompt tokens: {response.usage.prompt_tokens}")
-    print(f"Response tokens: {response.usage.completion_tokens}")
-    print("Response:")
-    print(response.choices[0].message.content)
+    generate_content(client, messages, args)
 
 if __name__ == "__main__":
     main()
