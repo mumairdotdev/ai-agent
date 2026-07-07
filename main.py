@@ -1,8 +1,15 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+import argparse
+
+
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="AI Code Assistant")
+    parser.add_argument("user_ prompt", type=str, help="Prompt to send to the LLM")
+    args = parser.parse_args()
+
     load_dotenv()
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if api_key == None:
@@ -16,12 +23,13 @@ def main() -> None:
     response = client.chat.completions.create(
         model="openrouter/free",
         messages=[
-        {
-            "role": "user",
-            "content": "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.",
-        }
-    ]
+            {
+                "role": "user",
+                "content": args.user_prompt,
+            }
+        ]
     )
+
     if response.usage is None:
         raise RuntimeError("Usage proterty is None.")
     print(f"Prompt tokens: {response.usage.prompt_tokens}")
