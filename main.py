@@ -3,11 +3,15 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
 
-
+def generate_content(client: OpenAI, messages: list) -> None:
+    return client.chat.completions.create(
+        model="openrouter/free",
+        messages= messages
+    )
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Code Assistant")
-    parser.add_argument("user_ prompt", type=str, help="Prompt to send to the LLM")
+    parser.add_argument("user_prompt", type=str, help="Prompt to send to the LLM")
     args = parser.parse_args()
 
     load_dotenv()
@@ -20,15 +24,11 @@ def main() -> None:
         api_key=api_key
     )
 
-    response = client.chat.completions.create(
-        model="openrouter/free",
-        messages=[
-            {
-                "role": "user",
-                "content": args.user_prompt,
-            }
-        ]
-    )
+    messages = [
+        {"role": "user", "content": args.user_prompt},
+    ]
+
+    response = generate_content(client, messages)
 
     if response.usage is None:
         raise RuntimeError("Usage proterty is None.")
