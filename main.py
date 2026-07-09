@@ -2,15 +2,17 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
+from prompts import system_prompt
 
 def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -> None:
     response = client.chat.completions.create(
         model="openrouter/free",
-        messages= messages
+        messages= messages,
+        temperature=0,
     )
 
     if response.usage is None:
-        raise RuntimeError("Usage proterty is None.")
+        raise RuntimeError("Usage property is None.")
     if args.verbose:
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {response.usage.prompt_tokens}")
@@ -35,6 +37,7 @@ def main() -> None:
     )
 
     messages = [
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": args.user_prompt},
     ]
 
