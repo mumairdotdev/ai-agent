@@ -31,7 +31,7 @@ def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -
         if tool_call.type != "function":
             continue
         function_args = json.loads(tool_call.function.arguments or "{}")
-        print(f"Calling function: {tool_call.function.name} with arguments: {function_args}")
+        print(f"Calling function: {tool_call.function.name}({function_args})")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Code Assistant")
