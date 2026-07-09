@@ -1,11 +1,13 @@
 import os
+import sys
 from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
+from config import MAX_ITERS
 from prompts import system_prompt
 from call_function import available_functions, call_function
 
-def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -> None:
+def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -> str | None:
     response = client.chat.completions.create(
         model="openrouter/free",
         messages= messages,
@@ -21,10 +23,9 @@ def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -
         print(f"Response tokens: {response.usage.completion_tokens}")
     
     message = response.choices[0].message
+    messages.append(message)
     if not message.tool_calls:
-        print("Response:")
-        print(message.content)
-        return
+        return message.content
     
     for tool_call in message.tool_calls:
         if tool_call.type != "function":
@@ -34,6 +35,9 @@ def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -
             raise RuntimeError(f"Empty function response for  '{tool_call.function.name}'")
         if args.verbose:
             print(f"Function result: {result['content']}")
+        messages.append(result)
+    
+    return None
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Code Assistant")
@@ -56,7 +60,16 @@ def main() -> None:
         {"role": "user", "content": args.user_prompt},
     ]
 
-    generate_content(client, messages, args)
+    for _ in range(MAX_ITERS):
+        try:
+            final_response = generate_content(client, messages, args)
+            if final_response is not None:
+                print(f"Final response: {final_response}")
+                return
+        except Exception as e:
+            print(f"Error occurred: {e}")
+    print("Maximum attempts reached. Exiting.")
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()
