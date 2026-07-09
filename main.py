@@ -3,12 +3,15 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
 from prompts import system_prompt
+from call_function import available_functions
+import json
 
 def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -> None:
     response = client.chat.completions.create(
         model="openrouter/free",
         messages= messages,
         temperature=0,
+        tools=available_functions,
     )
 
     if response.usage is None:
@@ -17,8 +20,18 @@ def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {response.usage.prompt_tokens}")
         print(f"Response tokens: {response.usage.completion_tokens}")
-    print("Response:")
-    print(response.choices[0].message.content)
+    
+    message = response.choices[0].message
+    if not message.tool_calls:
+        print("Response:")
+        print(message.content)
+        return
+    
+    for tool_call in message.tool_calls:
+        if tool_call.type != "function":
+            continue
+        function_args = json.loads(tool_call.function.arguments or "{}")
+        print(f"Calling function: {tool_call.function.name} with arguments: {function_args}")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Code Assistant")
