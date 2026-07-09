@@ -3,8 +3,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
 from prompts import system_prompt
-from call_function import available_functions
-import json
+from call_function import available_functions, call_function
 
 def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -> None:
     response = client.chat.completions.create(
@@ -30,8 +29,11 @@ def generate_content(client: OpenAI, messages: list, args: argparse.Namespace) -
     for tool_call in message.tool_calls:
         if tool_call.type != "function":
             continue
-        function_args = json.loads(tool_call.function.arguments or "{}")
-        print(f"Calling function: {tool_call.function.name}({function_args})")
+        result = call_function(tool_call, verbose= args.verbose)
+        if result.get("content") is None:
+            raise RuntimeError(f"Empty function response for  '{tool_call.function.name}'")
+        if args.verbose:
+            print(f"Function result: {result['content']}")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI Code Assistant")
